@@ -11,11 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
     
-    // 將獲取的參數填入隱藏欄位 (可供提交，且方便除錯)
+    // 將獲取的參數填入隱藏欄位
     document.getElementById('tableauUser').value = tableauUser;
     document.getElementById('dashboardId').value = dashboardId;
 
-    // 顯示除錯資訊（可選，但建議保留）
+    // 顯示除錯資訊
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
     
     questionForm.addEventListener('submit', function(e) {
