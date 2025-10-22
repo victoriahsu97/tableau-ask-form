@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
 
         // 替換成實際的 Make Webhook URL
-        const webhookUrl = 'https://hook.eu2.make.com/sylqftkwhstdrg3k8spelcycilspgia4';
+        const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9';
         
         // 從表單中獲取最終數據
         const payload = {
