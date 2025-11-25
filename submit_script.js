@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 替換成你的實際 Make Webhook URL
-        const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
+        const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9'; 
         
         // 構造發送到 Make 的數據體 (Payload)
         const payload = {
