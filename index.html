@@ -8,7 +8,21 @@
         body { font-family: Arial, sans-serif; padding: 15px; background-color: transparent; }
         form { background-color: #f7f7f7; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         label { display: block; margin-top: 10px; font-weight: bold; }
-        textarea, select { width: 95%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        #questionContent {
+            width: 95%; 
+            min-height: 100px; 
+            padding: 8px; 
+            margin-top: 5px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            background-color: white; /* 確保背景是白色，以便圖片清晰 */
+            overflow-y: auto; /* 允許滾動 */
+        }
+
+        /* 统一表單元素樣式 */
+        select { width: 95%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { background-color: #5cb85c; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
         button:hover { background-color: #4cae4c; }
         #status { margin-top: 15px; font-weight: bold; }
@@ -18,9 +32,15 @@
 <body>
 
     <form id="questionForm">
-        <label for="question">提問內容：</label>
-        <textarea id="question" name="question" rows="4" required placeholder="請描述您的需求..."></textarea>
+        <label for="questionContent">提問內容 (可貼圖)：</label>
+        <div id="questionContent" name="question" contenteditable="true" 
+             placeholder="請描述您的問題並直接貼上截圖..."
+             style="min-height: 100px;">
+        </div>
 
+        <input type="hidden" id="imageData" name="imageData">
+        <input type="hidden" id="imageType" name="imageType">
+        
         <label for="dept">部門分派：</label>
         <select id="dept" name="dept">
             <option value="中央經管">中央經管</option>
