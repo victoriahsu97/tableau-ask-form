@@ -9,6 +9,7 @@
         form { background-color: #f7f7f7; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         label { display: block; margin-top: 10px; font-weight: bold; }
         
+        /* 改造後的可貼圖提問框樣式 */
         #questionContent {
             width: 95%; 
             min-height: 100px; 
@@ -17,11 +18,11 @@
             border: 1px solid #ccc; 
             border-radius: 4px; 
             box-sizing: border-box; 
-            background-color: white; /* 確保背景是白色，以便圖片清晰 */
-            overflow-y: auto; /* 允許滾動 */
+            background-color: white; 
+            overflow-y: auto; 
         }
 
-        /* 统一表單元素樣式 */
+        /* 統一表單元素樣式 */
         select { width: 95%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { background-color: #5cb85c; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
         button:hover { background-color: #4cae4c; }
@@ -34,7 +35,7 @@
     <form id="questionForm">
         <label for="questionContent">提問內容 (可貼圖)：</label>
         <div id="questionContent" name="question" contenteditable="true" 
-             placeholder="請描述您的問題並直接貼上截圖..."
+             placeholder="請描述您的疑問並直接貼上截圖..."
              style="min-height: 100px;">
         </div>
 
