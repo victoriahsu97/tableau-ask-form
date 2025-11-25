@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
 
-    // 1. 獲取 Tableau URL 參數
+    // 1. 获取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
@@ -16,14 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dashboardId').value = dashboardId;
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
-
     // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
 
+    // 確保每次贴上时都清空数据，避免舊數據干擾
     let finalBase64String = ''; 
     let finalImageType = '';   
 
     questionContentDiv.addEventListener('paste', function(e) {
-        console.log('偵測到貼上事件。');
+        console.log('Paste event detected.');
         
         // 每次貼上都清除舊狀態
         finalBase64String = ''; 
@@ -38,19 +38,19 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const item of items) {
             // 檢查貼上內容是否是圖片
             if (item.type.indexOf('image') !== -1) {
-                e.preventDefault(); // 阻止瀏覽器預設貼上行為
+                e.preventDefault(); // 阻止浏览器默认粘贴行为
                 imageFound = true;
                 const file = item.getAsFile();
                 
                 if (!file) {
-                    console.error('無法獲取圖片文件對象。');
-                    statusDiv.innerHTML = '❌ 無法獲取圖片文件對象。';
+                    console.error('File object is null/undefined.');
+                    statusDiv.innerHTML = '❌ 无法获取图片文件对象，请尝试使用截图工具。';
                     continue;
                 }
                 
-                console.log(`偵測到圖片文件: ${file.type}, 大小: ${file.size}`);
+                console.log(`Image file detected: ${file.type}, size: ${file.size}`);
 
-                // 使用 FileReader API 將圖片文件轉換為 Base64 字符串
+                // 使用 FileReader API 将图片文件转换为 Base64 字符串
                 const reader = new FileReader();
                 
                 reader.onload = function(event) {
@@ -58,42 +58,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // 確保 Data URL 格式正確，並提取 Base64 字符串部分
                     if (base64DataURL.startsWith('data:')) {
+                        // 提取 Base64 字符串 (去除 "data:image/png;base64,")
                         const parts = base64DataURL.split(',');
                         if (parts.length > 1) {
                             finalBase64String = parts[1]; 
                             finalImageType = file.type;
                             
-                            // 更新隱藏欄位
+                            // 更新隐藏栏位
                             imageDataInput.value = finalBase64String;
                             imageTypeInput.value = finalImageType;
                             
-                            console.log('✅ Base64 轉換成功，隱藏欄位已更新。');
+                            console.log('✅ Base64 conversion successful. Input fields updated.');
                             
-                            // 在可編輯區域顯示佔位符
+                            // 在可编辑区域显示占位符
                             const imgPlaceholder = document.createElement('img');
                             imgPlaceholder.src = event.target.result;
                             imgPlaceholder.style.maxWidth = '100%';
                             imgPlaceholder.style.height = 'auto';
-                            imgPlaceholder.title = '截圖已捕獲 (Base64)';
+                            imgPlaceholder.title = 'Screenshot captured (Base64)';
                             
                             // 清除 contenteditable 區域中的所有內容（只保留圖片）
                             questionContentDiv.innerHTML = ''; 
                             questionContentDiv.appendChild(imgPlaceholder);
                             
-                            statusDiv.innerHTML = '✅ 截圖已捕獲！請繼續輸入問題。';
+                            statusDiv.innerHTML = '✅ 截图已捕获！请继续输入问题。';
                         } else {
-                            console.error('數據 URL 格式錯誤。');
-                            statusDiv.innerHTML = '❌ 圖片數據提取失敗。';
+                            console.error('Data URL format error during split.');
+                            statusDiv.innerHTML = '❌ 图片数据提取失败。';
                         }
                     } else {
-                        console.error('Data URL 格式異常。');
-                        statusDiv.innerHTML = '❌ 圖片編碼格式異常。';
+                        console.error('Data URL does not start with "data:".');
+                        statusDiv.innerHTML = '❌ 图片编码格式异常。';
                     }
                 };
                 
                 reader.onerror = function() {
-                    console.error('FileReader 讀取失敗。');
-                    statusDiv.innerHTML = '❌ 圖片讀取失敗。';
+                    console.error('FileReader failed to read image.');
+                    statusDiv.innerHTML = '❌ 图片读取失败。';
                 };
                 
                 reader.readAsDataURL(file);
@@ -108,12 +109,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // --- 3. 表單提交邏輯 (發送到 Make) ---
+    // --- 3. 表单提交逻辑 (发送到 Make) ---
 
     questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 提取純文本問題內容
+        // 提取纯文本问题内容（从 div 的 innerText 提取）
         const questionText = questionContentDiv.innerText.trim();
         
         if (!questionText && !imageDataInput.value) {
@@ -123,21 +124,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9'; 
         
-        // 構造發送到 Make 的數據體 (Payload)
         const payload = {
             question_text: questionText,
             department_id: document.getElementById('dept').value,
             dashboard_id: dashboardId,
             tableau_user: tableauUser,
-            // 攜帶圖片數據和類型
+            // 确保这些值是从隐藏栏位中读取的
             image_data_base64: imageDataInput.value, 
             image_mime_type: imageTypeInput.value || 'image/png' 
         };
         
-        console.log('發送的 Payload:', payload); 
+        console.log('Payload sent:', payload); // 检查发送前的数据
         statusDiv.innerHTML = '正在發送...';
 
-        // 發送 POST 請求到 Make Webhook
+        // 发送 POST 请求到 Make Webhook
         fetch(webhookUrl, {
             method: 'POST',
             headers: {
@@ -147,22 +147,21 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
                 throw new Error('Webhook 處理失敗');
             }
             return response.json(); 
         })
         .then(data => {
-            statusDiv.innerHTML = '✅ 問題與截圖已成功提交到 Slack！';
-            // 提交成功後清除表單
+            statusDiv.innerHTML = '✅ 问题与截图已成功提交到 Slack！';
+            // 提交成功后清除表单
             questionForm.reset();
             questionContentDiv.innerHTML = '';
             imageDataInput.value = '';
             imageTypeInput.value = '';
         })
         .catch(error => {
-            console.error('提交錯誤:', error);
-            statusDiv.innerHTML = '❌ 提交失敗，請檢查網路或聯繫 IT 部門。';
+            console.error('Submission Error:', error);
+            statusDiv.innerHTML = '❌ 提交失败，请检查网络或联系 IT 部门。';
         });
     });
 });
