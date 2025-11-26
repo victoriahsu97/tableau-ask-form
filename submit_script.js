@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
 
-    // 1. 获取 Tableau URL 參數
+    // 1. 獲取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
