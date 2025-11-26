@@ -32,8 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
         imageTypeInput.value = '';
         statusDiv.innerHTML = '正在處理貼上內容...';
         
-        // 🚨 注意：不再清空 questionContentDiv.innerHTML，以保留文字
-
+        // 🚨 注意：立即清空 contenteditable 區域中的所有內容（只保留圖片）
+        // 這是為了在圖片載入時插入新的佔位符，並防止殘留的 HTML 元素。
+        // **注意：由於這個行為會清除貼圖前的文字，建議用戶先貼圖再輸入文字。**
+        const currentText = questionContentDiv.innerText.trim();
+        questionContentDiv.innerHTML = ''; 
+        
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         let imageFound = false;
 
@@ -48,6 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('無法獲取圖片文件對象。');
                     statusDiv.innerHTML = '❌ 無法獲取圖片文件對象。';
                     continue;
+                }
+                
+                // 檢查文件大小，防止 Payload 超限 (建議 4MB)
+                const MAX_SIZE_BYTES = 4000000; 
+                if (file.size > MAX_SIZE_BYTES) {
+                    statusDiv.innerHTML = '❌ 截圖檔案過大 (超過 4MB)，請截取較小範圍。';
+                    return;
                 }
                 
                 console.log(`偵測到圖片文件: ${file.type}, 大小: ${file.size}`);
@@ -75,8 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         imgPlaceholder.style.height = 'auto';
                         imgPlaceholder.title = '截圖已捕獲 (Base64)';
                         
-                        // ** 關鍵修正：將圖片新增到 div 的末端，不清除現有文字 **
-                        questionContentDiv.appendChild(document.createElement('br'));
+                        // 重新插入文字和圖片
+                        questionContentDiv.innerHTML = (currentText ? currentText + '<br>' : ''); 
                         questionContentDiv.appendChild(imgPlaceholder);
                         questionContentDiv.appendChild(document.createElement('br'));
                         
@@ -98,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!imageFound) {
-            // 如果沒有圖片，允許文本正常貼上
+            // 如果沒有圖片，則將之前清除的文字重新放回，並允許文本正常貼上
+            questionContentDiv.innerHTML = currentText; 
             statusDiv.innerHTML = 'ℹ️ 僅貼上了文字。';
         }
     });
@@ -109,9 +121,10 @@ document.addEventListener('DOMContentLoaded', function() {
     questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 提取純文本問題內容 (包含圖片上下的文字)
+        // 提取純文本問題內容
         const questionText = questionContentDiv.innerText.trim();
         
+        // 檢查必須有文本或圖片數據
         if (!questionText && !imageDataInput.value) {
             statusDiv.innerHTML = '請輸入提問內容或貼上截圖！';
             return;
@@ -119,16 +132,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
         
-        // 構造發送到 Make 的數據體 (Payload)
-        const payload = {
+        // 構造基本 Payload
+        let payload = {
             question_text: questionText,
             department_id: document.getElementById('dept').value,
             dashboard_id: dashboardId,
             tableau_user: tableauUser,
-            // 攜帶圖片數據和類型
-            image_data_base64: imageDataInput.value, 
-            image_mime_type: imageTypeInput.value || 'image/png' 
         };
+
+        // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
+        if (imageDataInput.value) {
+            payload.image_data_base64 = imageDataInput.value;
+            payload.image_mime_type = imageTypeInput.value || 'image/png'; 
+        }
         
         console.log('Payload sent:', payload); 
         statusDiv.innerHTML = '正在發送...';
@@ -143,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
+                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
                 throw new Error('Webhook 處理失敗');
             }
             return response.json(); 
