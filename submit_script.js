@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
 
-    // 1. 获取 Tableau URL 參數
+    // 1. 獲取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
@@ -16,22 +16,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dashboardId').value = dashboardId;
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
+
     // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
 
-    // 儲存最終的 Base64 數據
     let finalBase64String = ''; 
     let finalImageType = '';   
 
     questionContentDiv.addEventListener('paste', function(e) {
         console.log('偵測到貼上事件。');
         
-        // 每次貼上時，清除舊數據並準備好接收
+        // 每次貼上時，清除舊狀態並準備好數據接收
         finalBase64String = ''; 
         finalImageType = '';
         imageDataInput.value = '';
         imageTypeInput.value = '';
         statusDiv.innerHTML = '正在處理貼上內容...';
-        questionContentDiv.innerHTML = ''; // 立即清空，避免圖片與文字殘留
+        
+        // 🚨 注意：不再清空 questionContentDiv.innerHTML，以保留文字
 
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         let imageFound = false;
@@ -39,14 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const item of items) {
             // 檢查貼上內容是否是圖片
             if (item.type.indexOf('image') !== -1) {
-                e.preventDefault(); // 阻止瀏覽器預設行為
+                e.preventDefault(); // 阻止瀏覽器預設貼上行為
                 imageFound = true;
                 const file = item.getAsFile();
                 
                 if (!file) {
                     console.error('無法獲取圖片文件對象。');
                     statusDiv.innerHTML = '❌ 無法獲取圖片文件對象。';
-                    break;
+                    continue;
                 }
                 
                 console.log(`偵測到圖片文件: ${file.type}, 大小: ${file.size}`);
@@ -58,14 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const parts = base64DataURL.split(',');
                     
                     if (parts.length > 1) {
-                        finalBase64String = parts[1];
+                        finalBase64String = parts[1]; 
                         finalImageType = file.type;
                         
-                        // 核心：更新隱藏欄位
+                        // 更新隱藏欄位
                         imageDataInput.value = finalBase64String;
                         imageTypeInput.value = finalImageType;
                         
-                        console.log('✅ Base64 轉換成功。Input fields updated.');
+                        console.log('✅ Base64 轉換成功，隱藏欄位已更新。');
                         
                         // 顯示佔位符
                         const imgPlaceholder = document.createElement('img');
@@ -74,8 +75,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         imgPlaceholder.style.height = 'auto';
                         imgPlaceholder.title = '截圖已捕獲 (Base64)';
                         
-                        // 將佔位符插入到已清空的 contenteditable 區域
+                        // ** 關鍵修正：將圖片新增到 div 的末端，不清除現有文字 **
+                        questionContentDiv.appendChild(document.createElement('br'));
                         questionContentDiv.appendChild(imgPlaceholder);
+                        questionContentDiv.appendChild(document.createElement('br'));
+                        
                         statusDiv.innerHTML = '✅ 截圖已捕獲！請繼續輸入問題。';
                     } else {
                         console.error('數據 URL 格式錯誤。');
@@ -88,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusDiv.innerHTML = '❌ 圖片讀取失敗。';
                 };
                 
-                // 讀取文件
                 reader.readAsDataURL(file);
                 break; // 只處理第一張圖片
             }
@@ -106,17 +109,15 @@ document.addEventListener('DOMContentLoaded', function() {
     questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 提取純文本問題內容
+        // 提取純文本問題內容 (包含圖片上下的文字)
         const questionText = questionContentDiv.innerText.trim();
         
-        // 檢查必須有文本或圖片數據
         if (!questionText && !imageDataInput.value) {
             statusDiv.innerHTML = '請輸入提問內容或貼上截圖！';
             return;
         }
 
-        // 替換成你的實際 Make Webhook URL
-        const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9'; 
+        const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
         
         // 構造發送到 Make 的數據體 (Payload)
         const payload = {
