@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
 
-    // 1. 獲取 Tableau URL 參數
+    // 1. 获取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
@@ -106,4 +106,57 @@ document.addEventListener('DOMContentLoaded', function() {
     questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 提取純
+        // 提取純文本問題內容
+        const questionText = questionContentDiv.innerText.trim();
+        
+        // 檢查必須有文本或圖片數據
+        if (!questionText && !imageDataInput.value) {
+            statusDiv.innerHTML = '請輸入提問內容或貼上截圖！';
+            return;
+        }
+
+        // 替換成你的實際 Make Webhook URL
+        const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9'; 
+        
+        // 構造發送到 Make 的數據體 (Payload)
+        const payload = {
+            question_text: questionText,
+            department_id: document.getElementById('dept').value,
+            dashboard_id: dashboardId,
+            tableau_user: tableauUser,
+            // 攜帶圖片數據和類型
+            image_data_base64: imageDataInput.value, 
+            image_mime_type: imageTypeInput.value || 'image/png' 
+        };
+        
+        console.log('Payload sent:', payload); 
+        statusDiv.innerHTML = '正在發送...';
+
+        // 發送 POST 請求到 Make Webhook
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Webhook 處理失敗');
+            }
+            return response.json(); 
+        })
+        .then(data => {
+            statusDiv.innerHTML = '✅ 問題與截圖已成功提交到 Slack！';
+            // 提交成功後清除表單
+            questionForm.reset();
+            questionContentDiv.innerHTML = '';
+            imageDataInput.value = '';
+            imageTypeInput.value = '';
+        })
+        .catch(error => {
+            console.error('提交錯誤:', error);
+            statusDiv.innerHTML = '❌ 提交失敗，請檢查網路或聯繫 IT 部門。';
+        });
+    });
+});
