@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
+        const webhookUrl = 'https://hook.eu2.make.com/bwo7q8tfgb6xvcg07mifr1rltt73dge9'; 
         
         // 構造基本 Payload
         let payload = {
