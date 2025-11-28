@@ -16,6 +16,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dashboardId').value = dashboardId;
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
+    // --- 新增截圖按鈕的事件監聽器 ---
+    if (screenshotHelperButton) {
+        screenshotHelperButton.addEventListener('click', function() {
+            // 1. 提醒使用者操作系統的截圖快捷鍵
+            alert("請使用以下快捷鍵截取 Tableau 畫面：\n\nWindows: Win + Shift + S\nMac: Command + Shift + 4\n\n截圖完成後，請將圖片貼回下方的提問框。");
+            
+            // 2. 將焦點設定到可編輯的提問框，讓使用者可以直接貼上
+            questionContentDiv.focus();
+        });
+    }
+
 
     // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
 
