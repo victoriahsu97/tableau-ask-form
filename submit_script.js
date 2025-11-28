@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 替換成你的實際 Make Webhook URL
-        const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
+        const webhookUrl = 'https://hook.eu2.make.com/79l62pja48d9idlvbnv8ndit7kbjsc4s'; 
         
         // 構造基本 Payload
         let payload = {
