@@ -84,9 +84,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 按鈕：觸發自動擷取
+// --- 輔助按鈕邏輯 (隔離測試) ---
     if (screenshotHelperButton) {
-        screenshotHelperButton.addEventListener('click', startCapture);
+        console.log('Button found. Testing listener...');
+        
+        // 替換複雜的 startCapture，使用簡單的 alert 進行測試
+        screenshotHelperButton.addEventListener('click', function() {
+            alert("按鈕已成功啟動！"); // 如果這個彈窗出現，表示按鈕連線正常。
+
+            // 您可以選擇在這裡調用 startCapture() 進行測試
+            // startCapture(); 
+        });
     }
     
     
