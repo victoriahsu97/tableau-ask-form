@@ -1,10 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- 變數宣告區塊 ---
     const questionForm = document.getElementById('questionForm');
     const questionContentDiv = document.getElementById('questionContent');
     const imageDataInput = document.getElementById('imageData');
     const imageTypeInput = document.getElementById('imageType');
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
+    
+    // 🎉 關鍵修正：確保獲取到截圖輔助按鈕 (假設 ID 為 'screenshotHelperButton')
+    const screenshotHelperButton = document.getElementById('screenshotHelperButton'); 
 
     // 1. 獲取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
 
     let finalBase64String = ''; 
-    let finalImageType = '';   
+    let finalImageType = '';    
 
     questionContentDiv.addEventListener('paste', function(e) {
         console.log('偵測到貼上事件。');
