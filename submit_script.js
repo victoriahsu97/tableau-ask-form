@@ -1,15 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 獲取所有必要的 DOM 元素
     const questionForm = document.getElementById('questionForm');
     const questionContentDiv = document.getElementById('questionContent');
     const imageDataInput = document.getElementById('imageData');
     const imageTypeInput = document.getElementById('imageType');
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
-    const screenshotHelperButton = document.getElementById('screenshotHelper');
-    const canvas = document.getElementById('screenshotCanvas'); // 用於 getDisplayMedia 轉換
 
-    // 1. 獲取 Tableau URL 參數 (靜態變數)
+    // 1. 獲取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     const tableauUser = urlParams.get('userName') || 'Unknown User'; 
     const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
@@ -19,116 +16,66 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dashboardId').value = dashboardId;
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
-    // 儲存 Base64 數據的狀態
-    let finalBase64String = ''; 
-    let finalImageType = '';   
-    
-    // ----------------------------------------------------
-    // I. 程式化擷取畫面邏輯 (getDisplayMedia)
-    // ----------------------------------------------------
-
-    async function startCapture() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-            statusDiv.innerHTML = '❌ 您的瀏覽器不支援螢幕擷取 API。';
-            return;
-        }
-
-        statusDiv.innerHTML = '請在彈出視窗中選擇螢幕或 Tableau 視窗...';
-
-        try {
-            // 請求螢幕分享權限和串流 (此處會彈出瀏覽器安全視窗)
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { mediaSource: 'screen' },
-                audio: false
-            });
-
-            const video = document.createElement('video');
-            video.autoplay = true;
-            video.srcObject = stream;
-
-            video.onloadedmetadata = () => {
-                // 將視訊串流繪製到 Canvas
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // 停止串流
-                stream.getTracks().forEach(track => track.stop());
-
-                // 轉換 Canvas 內容為 Base64 (PNG 格式)
-                const dataURL = canvas.toDataURL('image/png');
-                
-                // 儲存數據
-                finalBase64String = dataURL.split(',')[1];
-                finalImageType = 'image/png';
-
-                imageDataInput.value = finalBase64String;
-                imageTypeInput.value = finalImageType;
-
-                // 在輸入框顯示圖片佔位符
-                const imgPlaceholder = document.createElement('img');
-                imgPlaceholder.src = dataURL;
-                imgPlaceholder.style.maxWidth = '100%';
-                imgPlaceholder.style.height = 'auto';
-                
-                questionContentDiv.innerHTML = '';
-                questionContentDiv.appendChild(imgPlaceholder);
-                
-                statusDiv.innerHTML = '✅ 畫面已擷取，可提交！';
-            };
-
-        } catch (err) {
-            console.error("螢幕擷取失敗:", err);
-            statusDiv.innerHTML = '❌ 擷取失敗或被取消，請重試。';
-        }
-    }
-
-// --- 輔助按鈕邏輯 (隔離測試) ---
+    // --- 新增截圖按鈕的事件監聽器 ---
     if (screenshotHelperButton) {
-        console.log('Button found. Testing listener...');
-        
-        // 替換複雜的 startCapture，使用簡單的 alert 進行測試
         screenshotHelperButton.addEventListener('click', function() {
-            alert("按鈕已成功啟動！"); // 如果這個彈窗出現，表示按鈕連線正常。
-
-            // 您可以選擇在這裡調用 startCapture() 進行測試
-            // startCapture(); 
+            // 1. 提醒使用者操作系統的截圖快捷鍵
+            alert("請使用以下快捷鍵截取 Tableau 畫面：\n\nWindows: Win + Shift + S\nMac: Command + Shift + 4\n\n截圖完成後，請將圖片貼回下方的提問框。");
+            
+            // 2. 將焦點設定到可編輯的提問框，讓使用者可以直接貼上
+            questionContentDiv.focus();
         });
     }
-    
-    
-    // ----------------------------------------------------
-    // II. 手動貼上邏輯 (Ctrl+V) - 作為自動擷取的備援
-    // ----------------------------------------------------
+
+
+    // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
+
+    let finalBase64String = ''; 
+    let finalImageType = '';   
 
     questionContentDiv.addEventListener('paste', function(e) {
-        console.log('偵測到手動貼上事件。');
+        console.log('偵測到貼上事件。');
         
-        // 清除舊狀態
+        // 每次貼上時，清除舊狀態並準備好數據接收
         finalBase64String = ''; 
         finalImageType = '';
         imageDataInput.value = '';
         imageTypeInput.value = '';
+        statusDiv.innerHTML = '正在處理貼上內容...';
+        
+        // 🚨 注意：立即清空 contenteditable 區域中的所有內容（只保留圖片）
+        // 這是為了在圖片載入時插入新的佔位符，並防止殘留的 HTML 元素。
+        // **注意：由於這個行為會清除貼圖前的文字，建議用戶先貼圖再輸入文字。**
+        const currentText = questionContentDiv.innerText.trim();
+        questionContentDiv.innerHTML = ''; 
         
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         let imageFound = false;
 
         for (const item of items) {
+            // 檢查貼上內容是否是圖片
             if (item.type.indexOf('image') !== -1) {
-                e.preventDefault(); // 阻止瀏覽器預設行為
+                e.preventDefault(); // 阻止瀏覽器預設貼上行為
                 imageFound = true;
                 const file = item.getAsFile();
                 
-                if (!file) continue;
-
+                if (!file) {
+                    console.error('無法獲取圖片文件對象。');
+                    statusDiv.innerHTML = '❌ 無法獲取圖片文件對象。';
+                    continue;
+                }
+                
+                // 檢查文件大小，防止 Payload 超限 (建議 4MB)
                 const MAX_SIZE_BYTES = 4000000; 
                 if (file.size > MAX_SIZE_BYTES) {
                     statusDiv.innerHTML = '❌ 截圖檔案過大 (超過 4MB)，請截取較小範圍。';
                     return;
                 }
+                
+                console.log(`偵測到圖片文件: ${file.type}, 大小: ${file.size}`);
 
                 const reader = new FileReader();
+                
                 reader.onload = function(event) {
                     const base64DataURL = event.target.result;
                     const parts = base64DataURL.split(',');
@@ -137,39 +84,55 @@ document.addEventListener('DOMContentLoaded', function() {
                         finalBase64String = parts[1]; 
                         finalImageType = file.type;
                         
+                        // 更新隱藏欄位
                         imageDataInput.value = finalBase64String;
                         imageTypeInput.value = finalImageType;
+                        
+                        console.log('✅ Base64 轉換成功，隱藏欄位已更新。');
                         
                         // 顯示佔位符
                         const imgPlaceholder = document.createElement('img');
                         imgPlaceholder.src = event.target.result;
                         imgPlaceholder.style.maxWidth = '100%';
-                        questionContentDiv.innerHTML = ''; 
+                        imgPlaceholder.style.height = 'auto';
+                        imgPlaceholder.title = '截圖已捕獲 (Base64)';
+                        
+                        // 重新插入文字和圖片
+                        questionContentDiv.innerHTML = (currentText ? currentText + '<br>' : ''); 
                         questionContentDiv.appendChild(imgPlaceholder);
                         questionContentDiv.appendChild(document.createElement('br'));
                         
                         statusDiv.innerHTML = '✅ 截圖已捕獲！請繼續輸入問題。';
+                    } else {
+                        console.error('數據 URL 格式錯誤。');
+                        statusDiv.innerHTML = '❌ 圖片數據提取失敗。';
                     }
                 };
+                
+                reader.onerror = function() {
+                    console.error('FileReader 讀取失敗。');
+                    statusDiv.innerHTML = '❌ 圖片讀取失敗。';
+                };
+                
                 reader.readAsDataURL(file);
-                break;
+                break; // 只處理第一張圖片
             }
         }
         
         if (!imageFound) {
+            // 如果沒有圖片，則將之前清除的文字重新放回，並允許文本正常貼上
+            questionContentDiv.innerHTML = currentText; 
             statusDiv.innerHTML = 'ℹ️ 僅貼上了文字。';
         }
     });
 
 
-    // ----------------------------------------------------
-    // III. 表單提交邏輯 (最終發送)
-    // ----------------------------------------------------
+    // --- 3. 表單提交邏輯 (發送到 Make) ---
 
     questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 提取純文本問題內容 (包含圖片上下的文字)
+        // 提取純文本問題內容
         const questionText = questionContentDiv.innerText.trim();
         
         // 檢查必須有文本或圖片數據
@@ -184,11 +147,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let payload = {
             question_text: questionText,
             department_id: document.getElementById('dept').value,
-            dashboard_id: dashboardId, 
+            dashboard_id: dashboardId,
             tableau_user: tableauUser,
         };
 
-        // 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位
+        // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
         if (imageDataInput.value) {
             payload.image_data_base64 = imageDataInput.value;
             payload.image_mime_type = imageTypeInput.value || 'image/png'; 
@@ -207,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
+                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
                 throw new Error('Webhook 處理失敗');
             }
             return response.json(); 
