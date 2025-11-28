@@ -99,7 +99,51 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // ... [其餘的提交邏輯 (Payload 構造、fetch 呼叫) 保持不變] ...
-        // ... [請將您的 'submit' 處理程序貼在這裡，並確保 webhookUrl 正確] ...
+       const webhookUrl = 'https://hook.eu2.make.com/79l62pja48d9idlvbnv8ndit7kbjsc4s'; 
+        
+        // 構造基本 Payload
+        let payload = {
+            question_text: questionText,
+            department_id: document.getElementById('dept').value,
+            dashboard_id: dashboardId,
+            tableau_user: tableauUser,
+        };
+
+        // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
+        if (imageDataInput.value) {
+            payload.image_data_base64 = imageDataInput.value;
+            payload.image_mime_type = imageTypeInput.value || 'image/png'; 
+        }
+        
+        console.log('Payload sent:', payload); 
+        statusDiv.innerHTML = '正在發送...';
+
+        // 發送 POST 請求到 Make Webhook
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(response => {
+            if (!response.ok) {
+                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
+                throw new Error('Webhook 處理失敗');
+            }
+            return response.json(); 
+        })
+        .then(data => {
+            statusDiv.innerHTML = '✅ 問題與截圖已成功提交到 Slack！';
+            // 提交成功後清除表單
+            questionForm.reset();
+            questionContentDiv.innerHTML = '';
+            imageDataInput.value = '';
+            imageTypeInput.value = '';
+        })
+        .catch(error => {
+            console.error('提交錯誤:', error);
+            statusDiv.innerHTML = '❌ 提交失敗，請檢查網路或聯繫 IT 部門。';
+        });
     });
 });
