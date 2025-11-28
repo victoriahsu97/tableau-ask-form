@@ -5,19 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau 提問介面</title>
     <style>
-        /* 保持原有樣式，並新增隱藏元素樣式 */
         body { font-family: Arial, sans-serif; padding: 15px; background-color: transparent; }
         form { background-color: #f7f7f7; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         label { display: block; margin-top: 10px; font-weight: bold; }
-        #questionContent { width: 95%; min-height: 100px; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: white; overflow-y: auto; }
+        
+        /* 改造後的可貼圖提問框樣式 */
+        #questionContent {
+            width: 95%; 
+            min-height: 100px; 
+            padding: 8px; 
+            margin-top: 5px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            background-color: white; 
+            overflow-y: auto; 
+        }
+
+        /* 統一表單元素樣式 */
         select { width: 95%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { background-color: #5cb85c; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
         button:hover { background-color: #4cae4c; }
         #status { margin-top: 15px; font-weight: bold; }
         .hidden-info { font-size: 0.8em; color: #666; margin-top: 10px; }
-        
-        /* 新增：隱藏的 Canvas 元素 */
-        #screenshotCanvas { display: none; } 
     </style>
 </head>
 <body>
@@ -29,11 +39,9 @@
              style="min-height: 100px;">
         </div>
 
-        <button type="button" id="screenshotHelper" style="background-color: #f38f12; margin-bottom: 10px;">
-            📸 點我自動擷取 Tableau 畫面 (需確認權限)
+        <button type="button" id="screenshotHelper" style="background-color: #007bff; margin-bottom: 10px;">
+            📸 點我截圖 (需手動貼上)
         </button>
-
-        <canvas id="screenshotCanvas"></canvas>
 
         <input type="hidden" id="imageData" name="imageData">
         <input type="hidden" id="imageType" name="imageType">
