@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // 獲取所有必要的 DOM 元素
     const questionForm = document.getElementById('questionForm');
     const questionContentDiv = document.getElementById('questionContent');
     const imageDataInput = document.getElementById('imageData');
     const imageTypeInput = document.getElementById('imageType');
     const statusDiv = document.getElementById('status');
     const debugDiv = document.getElementById('debugInfo');
+    const screenshotHelperButton = document.getElementById('screenshotHelper'); // 新增的按鈕變數
 
     // 1. 獲取 Tableau URL 參數
     const urlParams = new URLSearchParams(window.location.search);
@@ -16,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dashboardId').value = dashboardId;
     debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
-    // --- 新增截圖按鈕的事件監聽器 ---
+    // --- 輔助按鈕邏輯 (新增) ---
     if (screenshotHelperButton) {
         screenshotHelperButton.addEventListener('click', function() {
             // 1. 提醒使用者操作系統的截圖快捷鍵
@@ -43,17 +45,14 @@ document.addEventListener('DOMContentLoaded', function() {
         imageTypeInput.value = '';
         statusDiv.innerHTML = '正在處理貼上內容...';
         
-        // 🚨 注意：立即清空 contenteditable 區域中的所有內容（只保留圖片）
-        // 這是為了在圖片載入時插入新的佔位符，並防止殘留的 HTML 元素。
-        // **注意：由於這個行為會清除貼圖前的文字，建議用戶先貼圖再輸入文字。**
+        // 🚨 儲存目前文字，以便貼圖後重新插入
         const currentText = questionContentDiv.innerText.trim();
-        questionContentDiv.innerHTML = ''; 
-        
+        questionContentDiv.innerHTML = ''; // 清空內容，準備顯示圖片佔位符
+
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         let imageFound = false;
 
         for (const item of items) {
-            // 檢查貼上內容是否是圖片
             if (item.type.indexOf('image') !== -1) {
                 e.preventDefault(); // 阻止瀏覽器預設貼上行為
                 imageFound = true;
@@ -141,7 +140,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'https://hook.eu2.make.com/79l62pja48d9idlvbnv8ndit7kbjsc4s'; 
+        // 替換成你的實際 Make Webhook URL
+        const webhookUrl = 'YOUR_MAKE_WEBHOOK_URL_HERE'; 
         
         // 構造基本 Payload
         let payload = {
@@ -170,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
                 throw new Error('Webhook 處理失敗');
             }
             return response.json(); 
