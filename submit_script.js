@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'https://hook.eu2.make.com/79l62pja48d9idlvbnv8ndit7kbjsc4s'; 
+        const webhookUrl = 'https://hooks.airtable.com/workflows/v1/genericWebhook/appKxmr0hg6O41mdF/wflIpbQda5Z2U3Zsq/wtrmAksaDBpxzKouk'; 
         
         // 構造基本 Payload
         let payload = {
