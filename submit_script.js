@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     tableau_user: tableauUser,
                                     },
                     "response_mode": "blocking",
-                    "user": "postmanTest"
+                    "user": "postmanTest",
                     }
         };
 
