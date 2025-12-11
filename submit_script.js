@@ -156,8 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     tableau_user: tableauUser,
                                     },
                     "response_mode": "blocking",
-                    "user": "postmanTest",
-                    }
+                    "user": "postmanTest"
         };
 
         // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
