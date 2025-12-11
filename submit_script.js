@@ -149,9 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 構造基本 Payload
         let payload = {
-            empId:'empId',
-            TsBody:'TSBody',
-            catype:'catype'
+            empId: tableauUser,
+            TsBody: questionText,
+            catype: dashboardId
         };
 
         // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
