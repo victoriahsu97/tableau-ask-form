@@ -145,14 +145,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'https://hooks.airtable.com/workflows/v1/genericWebhook/appKxmr0hg6O41mdF/wflIpbQda5Z2U3Zsq/wtrmAksaDBpxzKouk'; 
+        const webhookUrl = 'https://fldpdify09.foxlink.com.tw/v1/workflows/run'; 
         
         // 構造基本 Payload
         let payload = {
-            question_text: questionText,
-            department_id: document.getElementById('dept').value,
-            dashboard_id: dashboardId,
-            tableau_user: tableauUser,
+            empId:'empId',
+            TsBody:'TSBody',
+            catype:'catype'
         };
 
         // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
@@ -169,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': 'Bearer app-uMEIrI8P6FmLAm53NjvUJeUX'
             },
             body: JSON.stringify(payload),
         })
