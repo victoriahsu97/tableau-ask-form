@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dify API Web Data Connector</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tableau-wdc@2.3.0/dist/tableau-wdc.min.js"></script>
+</head>
+<body>
+    <h1>Dify API 提交介面 (WDC)</h1>
+    
+    <div id="submitForm">
+        <label for="user_input">提問內容 (TsBody):</label><br>
+        <textarea id="user_input" rows="4" cols="50" placeholder="請輸入您的問題..."></textarea><br><br>
+        
+        <label for="emp_id">員工 ID (EmpId):</label><br>
+        <input type="text" id="emp_id" value="Your_ID" required><br><br>
+        
+        <label for="cat_type">分類 (CatType):</label><br>
+        <input type="text" id="cat_type" value="WDC_Submit" required><br><br>
+        
+        <button id="submit_button">提交給 Dify (觸發 Airtable/Slack)</button>
+        <p id="status_message" style="color: blue; margin-top: 10px;">狀態：等待輸入...</p>
+    </div>
+
+    <script>
+        // Tableau WDC 初始化 (必須)
+        tableau.extensions.initializeAsync();
+        
+        $(document).ready(function () {
+            // WDC 只是作為一個提交界面，不作為 Tableau 數據源
+            $('#submit_button').click(function () {
+                const url = 'https://fldpdify09.foxlink.com.tw/v1/workflows/run';
+                const auth_key = 'Bearer app-uMEIrI8P6FmLAm53NjvUJeUX'; 
+                
+                const questionText = $('#user_input').val();
+                const empId = $('#emp_id').val();
+                const catType = $('#cat_type').val();
+                const statusDiv = $('#status_message');
+                
+                if (!questionText || !empId) {
+                    statusDiv.text('請填寫提問內容和員工 ID！').css('color', 'red');
+                    return;
+                }
+                
+                const payload = {
+                    "inputs": {
+                        "TsBody": questionText,
+                        "empId": empId,
+                        "catype": catType
+                    },
+                    "response_mode": "blocking",
+                    "user": empId
+                };
+                
+                statusDiv.text('正在提交給 Dify API...').css('color', 'orange');
+                
+                // 執行 Dify API 呼叫 (這會繞過 Tableau 的 CORS 限制)
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': auth_key
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    // 即使發生錯誤，也嘗試解析錯誤訊息
+                    return response.text().then(text => { throw new Error('API 呼叫失敗，狀態碼: ' + response.status + ' 訊息: ' + text); });
+                })
+                .then(data => {
+                    // Dify 成功回傳，現在 Airtable/Slack 應該已更新
+                    statusDiv.text('✅ 提交成功！Airtable/Slack 已觸發。').css('color', 'green');
+                    console.log('Dify 回應:', data);
+                })
+                .catch(error => {
+                    statusDiv.text('❌ 提交錯誤: ' + error.message).css('color', 'red');
+                    console.error('API 錯誤:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
