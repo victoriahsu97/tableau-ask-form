@@ -150,9 +150,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 構造基本 Payload
         let payload={
                         "inputs": {
-                            "empId": "8840",
-                            "TsBody": "AI教育訓練",
-                            "catype": "F"
+                                    question_text: questionText,
+                                    department_id: document.getElementById('dept').value,
+                                    dashboard_id: dashboardId,
+                                    tableau_user: tableauUser,
                                     },
                     "response_mode": "blocking",
                     "user": "postmanTest"
