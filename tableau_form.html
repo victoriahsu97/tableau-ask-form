@@ -54,10 +54,16 @@
     <h4>留言回覆 (含檔案上傳)</h4>
     <form id="replyForm">
         
-        <label for="replierName">您的姓名</label>
-        <input type="text" placeholder="請輸入姓名" name="replierName" required>
-
-        <label for="replyContent">留言內容</label>
+        <label for="dashboardName"><b>Dashboard 名稱</b></label>
+        <input type="text" placeholder="例如: DS10_slack_2025 Overview" name="dashboardName" required>
+        
+        <label for="userDept"><b>您所屬部門</b></label>
+        <input type="text" placeholder="例如: 總部" name="userDept" required>
+        
+        <label for="replyNeeded"><b>是否需回覆你的問題 (選填)</b></label>
+        <input type="text" placeholder="例如: 不須任何回覆" name="replyNeeded">
+        
+        <label for="replyContent"><b>問題/回覆內容</b></label>
         <textarea placeholder="請輸入回覆內容" name="replyContent" rows="4" required></textarea>
         
         <label for="uploadedFile">上傳檔案 (選填)</label>
