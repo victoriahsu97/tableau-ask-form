@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>快速回覆與檔案上傳 - Tableau 嵌入</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* 基礎樣式，確保在 Tableau 網頁物件中看起來整潔 */
+        body, html { 
+            font-family: Arial, sans-serif; 
+            padding: 15px; 
+            background-color: #f7f7f7;
+            margin: 0;
+            line-height: 1.6;
+        }
+        h4 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 5px 0 15px 0; 
+            display: inline-block; 
+            border: 1px solid #ccc; 
+            box-sizing: border-box; 
+            border-radius: 4px;
+        }
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+        button { 
+            background-color: #008CBA; 
+            color: white; 
+            padding: 12px 18px; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #007bb5;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h4>留言回覆 (含檔案上傳)</h4>
+    <form id="replyForm">
+        
+        <label for="replierName">您的姓名</label>
+        <input type="text" placeholder="請輸入姓名" name="replierName" required>
+
+        <label for="replyContent">留言內容</label>
+        <textarea placeholder="請輸入回覆內容" name="replyContent" rows="4" required></textarea>
+        
+        <label for="uploadedFile">上傳檔案 (選填)</label>
+        <input type="file" name="uploadedFile" id="uploadedFile">
+
+        <button type="submit">提交回覆到 Tableau</button>
+        <p id="statusMessage" style="margin-top: 15px; font-weight: bold;"></p>
+    </form>
+
+    <script>
+        // *** 請將此 URL 替換為您在 Google Apps Script 部署後取得的 Web App URL ***
+        const WEB_APP_URL = 'https://script.google.com/a/macros/foxlink.com/s/AKfycbyHaSovbNwX31amu-aVoiY3wkh8LyyjpryIuNNbiPSrYg7_GsUm9ptHSffUhExO00Iu/exec'; 
+        
+        const form = document.getElementById('replyForm');
+        const statusMessage = document.getElementById('statusMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            statusMessage.style.color = 'blue';
+            statusMessage.textContent = '提交中... 請稍候 (請勿關閉或刷新)。';
+            document.querySelector('button[type="submit"]').disabled = true; // 防止重複提交
+
+            // FormData 會自動處理所有欄位，包括檔案
+            const formData = new FormData(form);
+
+            try {
+                // 使用 fetch 進行 POST 請求到 GAS Web App
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: formData // 將 FormData 直接作為 body 傳送
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusMessage.style.color = 'green';
+                    statusMessage.textContent = '✅ 回覆提交成功！有權限者刷新 Tableau 即可查看。';
+                    form.reset(); // 清空表單
+                } else {
+                    statusMessage.style.color = 'red';
+                    statusMessage.textContent = '❌ 提交失敗，請聯繫管理員。';
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                statusMessage.style.color = 'red';
+                statusMessage.textContent = '❌ 網路錯誤或伺服器問題。請檢查連線或聯繫IT。';
+            } finally {
+                document.querySelector('button[type="submit"]').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
