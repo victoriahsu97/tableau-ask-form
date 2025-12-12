@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'http://localhost:3000/proxy/dify'; 
+        const webhookUrl = 'http://10.8.100.134:3000/proxy/dify'; 
         
         // 構造基本 Payload
         let payload={
