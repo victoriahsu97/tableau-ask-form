@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'https://fldpdify09.foxlink.com.tw/v1/workflows/run'; 
+        const webhookUrl = 'http://localhost:3000/proxy/dify'; 
         
         // 構造基本 Payload
         let payload={
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer app-lH1JGy9hFYNCZk1bnLIPpSUj',
+                //'Authorization': 'Bearer app-lH1JGy9hFYNCZk1bnLIPpSUj',
             },
             body: JSON.stringify(payload),
         })
