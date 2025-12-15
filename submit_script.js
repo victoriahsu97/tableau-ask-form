@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const webhookUrl = 'http://10.8.100.134:3000/proxy/dify'; 
+        const webhookUrl = 'https://fldpdify09.foxlink.com.tw/v1/workflows/run'; 
         
         // 構造基本 Payload
         let payload={
