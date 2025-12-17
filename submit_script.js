@@ -11,7 +11,7 @@ const currentDashboardUrl = window.location.href;
 console.log('當前 URL:', currentDashboardUrl);
 
 // 3. Dify 代理的完整 Webhook URL
-const DIFY_WEBHOOK_URL = `${NGROK_PUBLIC_URL}/proxy/dify`; 
+// const DIFY_WEBHOOK_URL = `${NGROK_PUBLIC_URL}/proxy/dify`; 
 
 // *******************************************************************
 
@@ -62,7 +62,7 @@ async function sendDataToDify() {
     console.log('發送 Payload:', tableauPayload);
     
     try {
-        const response = await fetch(DIFY_WEBHOOK_URL, {
+        const response = await fetch(NGROK_PUBLIC_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
