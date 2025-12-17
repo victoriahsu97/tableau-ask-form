@@ -1,200 +1,88 @@
+/**
+ * submit_script.js - Tableau WDC 前端發送邏輯
+ * 發送數據到 Node.js 代理 (透過 Ngrok 隧道)
+ */
+
+// 1. Ngrok 產生的公開 HTTPS 網址 (每次啟動 ngrok 都會改變，需要即時更新)
+const NGROK_PUBLIC_URL = 'https://d9a84d701603.ngrok-free.app/api/workflows/run'; 
+
+// 2. 動態獲取當前完整的 URL
+const currentDashboardUrl = window.location.href; 
+console.log('當前 URL:', currentDashboardUrl);
+
+// 3. Dify 代理的完整 Webhook URL
+const DIFY_WEBHOOK_URL = `${NGROK_PUBLIC_URL}/proxy/dify`; 
+
+// *******************************************************************
+
+
+// 當 HTML 文件完全載入後，綁定按鈕事件
 document.addEventListener('DOMContentLoaded', function() {
-    // --- 變數宣告區塊 ---
-    const questionForm = document.getElementById('questionForm');
-    const questionContentDiv = document.getElementById('questionContent');
-    const imageDataInput = document.getElementById('imageData');
-    const imageTypeInput = document.getElementById('imageType');
-    const statusDiv = document.getElementById('status');
-    const debugDiv = document.getElementById('debugInfo');
-    
-    // 🎉 關鍵修正：確保獲取到截圖輔助按鈕 (假設 ID 為 'screenshotHelperButton')
-    const screenshotHelperButton = document.getElementById('screenshotHelperButton'); 
+    const sendButton = document.getElementById('send-button'); // 假設您的按鈕 ID 是 send-button
+    if (sendButton) {
+        sendButton.addEventListener('click', sendDataToDify);
+    }
+});
 
-    // 1. 獲取 Tableau URL 參數
-    const urlParams = new URLSearchParams(window.location.search);
-    const tableauUser = urlParams.get('userName') || 'Unknown User'; 
-    const dashboardId = urlParams.get('dashboardName') || 'Unknown Dashboard';
-    
-    // 填充隱藏欄位和除錯資訊
-    document.getElementById('tableauUser').value = tableauUser;
-    document.getElementById('dashboardId').value = dashboardId;
-    debugDiv.innerHTML = `已連結報表: ${dashboardId} | 使用者: ${tableauUser}`;
 
-    // --- 新增截圖按鈕的事件監聽器 ---
-    if (screenshotHelperButton) {
-        screenshotHelperButton.addEventListener('click', function() {
-            // 1. 提醒使用者操作系統的截圖快捷鍵
-            alert("請使用以下快捷鍵截取 Tableau 畫面：\n\nWindows: Win + Shift + S\nMac: Command + Shift + 4\n\n截圖完成後，請將圖片貼回下方的提問框。");
-            
-            // 2. 將焦點設定到可編輯的提問框，讓使用者可以直接貼上
-            questionContentDiv.focus();
-        });
+/**
+ * 核心函數：從 Tableau 前端收集資料並發送給 Node.js 代理
+ */
+async function sendDataToDify() {
+    
+    // 獲取用戶輸入 (例如：問題描述)
+    const userInputElement = document.getElementById('user-query'); // 假設輸入欄位 ID 是 user-query
+    const userQuery = userInputElement ? userInputElement.value : "未提供查詢內容";
+    
+    // 獲取群組選擇 (從下拉式選單獲取值)
+    const groupSelectElement = document.getElementById('group-selector'); // 假設下拉選單 ID 是 group-selector
+    const targetGroupId = groupSelectElement ? groupSelectElement.value : "Default_Group";
+
+    // 獲取 Tableau 相關資訊 (僅為範例，實際可能需透過 Tableau JS API 獲取)
+    const tableauUser = tableau.connectionData.user || 'Guest_User'; 
+
+    // 檢查 Ngrok URL 是否設定
+    if (NGROK_PUBLIC_URL.includes('xxxx-xxxx-xxxx')) {
+        alert('❌ 錯誤：請更新 NGROK_PUBLIC_URL 變數為您目前的 Ngrok 網址。');
+        return;
     }
 
+    // 組裝 JSON Payload，Key 必須與 Dify 工作流「開始」節點的輸入完全一致
+    const tableauPayload = {
+        // Dify 工作流的輸入變數:
+        "recipient_email": targetGroupId,           // ❗ 傳遞群組 ID 給 Dify 進行映射
+        "message_content": userQuery,               // 用戶輸入的核心內容
+        "message_url": currentDashboardUrl,         // 儀表板連結
+        "message_title": "Tableau Chatbot 請求 (來自 " + tableauUser + ")",
+        "response_mode": "blocking",                // Dify 的標準參數
+        "user": tableauUser,                        // 發送者
+        "sys.files": null                           // 保持 null 
+    };
 
-    // --- 2. 關鍵：圖片貼上和 Base64 轉換邏輯 ---
-
-    let finalBase64String = ''; 
-    let finalImageType = '';    
-
-    questionContentDiv.addEventListener('paste', function(e) {
-        console.log('偵測到貼上事件。');
-        
-        // 每次貼上時，清除舊狀態並準備好數據接收
-        finalBase64String = ''; 
-        finalImageType = '';
-        imageDataInput.value = '';
-        imageTypeInput.value = '';
-        statusDiv.innerHTML = '正在處理貼上內容...';
-        
-        // 🚨 注意：立即清空 contenteditable 區域中的所有內容（只保留圖片）
-        // 這是為了在圖片載入時插入新的佔位符，並防止殘留的 HTML 元素。
-        // **注意：由於這個行為會清除貼圖前的文字，建議用戶先貼圖再輸入文字。**
-        const currentText = questionContentDiv.innerText.trim();
-        questionContentDiv.innerHTML = ''; 
-        
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        let imageFound = false;
-
-        for (const item of items) {
-            // 檢查貼上內容是否是圖片
-            if (item.type.indexOf('image') !== -1) {
-                e.preventDefault(); // 阻止瀏覽器預設貼上行為
-                imageFound = true;
-                const file = item.getAsFile();
-                
-                if (!file) {
-                    console.error('無法獲取圖片文件對象。');
-                    statusDiv.innerHTML = '❌ 無法獲取圖片文件對象。';
-                    continue;
-                }
-                
-                // 檢查文件大小，防止 Payload 超限 (建議 4MB)
-                const MAX_SIZE_BYTES = 4000000; 
-                if (file.size > MAX_SIZE_BYTES) {
-                    statusDiv.innerHTML = '❌ 截圖檔案過大 (超過 4MB)，請截取較小範圍。';
-                    return;
-                }
-                
-                console.log(`偵測到圖片文件: ${file.type}, 大小: ${file.size}`);
-
-                const reader = new FileReader();
-                
-                reader.onload = function(event) {
-                    const base64DataURL = event.target.result;
-                    const parts = base64DataURL.split(',');
-                    
-                    if (parts.length > 1) {
-                        finalBase64String = parts[1]; 
-                        finalImageType = file.type;
-                        
-                        // 更新隱藏欄位
-                        imageDataInput.value = finalBase64String;
-                        imageTypeInput.value = finalImageType;
-                        
-                        console.log('✅ Base64 轉換成功，隱藏欄位已更新。');
-                        
-                        // 顯示佔位符
-                        const imgPlaceholder = document.createElement('img');
-                        imgPlaceholder.src = event.target.result;
-                        imgPlaceholder.style.maxWidth = '100%';
-                        imgPlaceholder.style.height = 'auto';
-                        imgPlaceholder.title = '截圖已捕獲 (Base64)';
-                        
-                        // 重新插入文字和圖片
-                        questionContentDiv.innerHTML = (currentText ? currentText + '<br>' : ''); 
-                        questionContentDiv.appendChild(imgPlaceholder);
-                        questionContentDiv.appendChild(document.createElement('br'));
-                        
-                        statusDiv.innerHTML = '✅ 截圖已捕獲！請繼續輸入問題。';
-                    } else {
-                        console.error('數據 URL 格式錯誤。');
-                        statusDiv.innerHTML = '❌ 圖片數據提取失敗。';
-                    }
-                };
-                
-                reader.onerror = function() {
-                    console.error('FileReader 讀取失敗。');
-                    statusDiv.innerHTML = '❌ 圖片讀取失敗。';
-                };
-                
-                reader.readAsDataURL(file);
-                break; // 只處理第一張圖片
-            }
-        }
-        
-        if (!imageFound) {
-            // 如果沒有圖片，則將之前清除的文字重新放回，並允許文本正常貼上
-            questionContentDiv.innerHTML = currentText; 
-            statusDiv.innerHTML = 'ℹ️ 僅貼上了文字。';
-        }
-    });
-
-
-    // --- 3. 表單提交邏輯 (發送到 Make) ---
-
-    questionForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        // 提取純文本問題內容
-        const questionText = questionContentDiv.innerText.trim();
-        
-        // 檢查必須有文本或圖片數據
-        if (!questionText && !imageDataInput.value) {
-            statusDiv.innerHTML = '請輸入提問內容或貼上截圖！';
-            return;
-        }
-
-        const webhookUrl = 'https://fldpdify09.foxlink.com.tw/v1/workflows/run'; 
-        
-        // 構造基本 Payload
-        let payload={
-                        "inputs": {
-                                    question_text: questionText,
-                                    department_id: document.getElementById('dept').value,
-                                    dashboard_id: dashboardId,
-                                    tableau_user: tableauUser,
-                                    },
-                    "response_mode": "blocking",
-                    "user": "postmanTest"
-        };
-
-        // *** 關鍵修正：僅在有 Base64 數據時，才加入圖片欄位 ***
-        if (imageDataInput.value) {
-            payload.image_data_base64 = imageDataInput.value;
-            payload.image_mime_type = imageTypeInput.value || 'image/png'; 
-        }
-        
-        console.log('Payload sent:', payload); 
-        statusDiv.innerHTML = '正在發送...';
-
-        // 發送 POST 請求到 Make Webhook
-        fetch(webhookUrl, {
+    console.log('發送 Payload:', tableauPayload);
+    
+    try {
+        const response = await fetch(DIFY_WEBHOOK_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                //'Authorization': 'Bearer app-lH1JGy9hFYNCZk1bnLIPpSUj',
             },
-            body: JSON.stringify(payload),
-        })
-        .then(response => {
-            if (!response.ok) {
-                // 如果 Make 返回非 2xx 狀態碼，拋出錯誤
-                throw new Error('Webhook 處理失敗');
-            }
-            return response.json(); 
-        })
-        .then(data => {
-            statusDiv.innerHTML = '✅ 問題與截圖已成功提交到 Slack！';
-            // 提交成功後清除表單
-            questionForm.reset();
-            questionContentDiv.innerHTML = '';
-            imageDataInput.value = '';
-            imageTypeInput.value = '';
-        })
-        .catch(error => {
-            console.error('提交錯誤:', error);
-            statusDiv.innerHTML = '❌ 提交失敗，請檢查網路或聯繫 IT 部門。';
+            body: JSON.stringify(tableauPayload),
         });
-    });
-});
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('✅ 訊息已成功提交！Dify 回應: ' + JSON.stringify(data.answer || data));
+            // 提交成功後，清空輸入欄位
+            if (userInputElement) userInputElement.value = '';
+        } else {
+            alert('❌ 提交失敗，伺服器錯誤: ' + (data.error ? data.error.message : '未知錯誤'));
+            console.error('伺服器錯誤回應:', data);
+        }
+
+    } catch (error) {
+        console.error('網路連線或代理錯誤:', error);
+        alert('❌ 連線失敗。請確認 Node.js 和 Ngrok 服務皆已啟動並指向正確埠號。');
+    }
+}
