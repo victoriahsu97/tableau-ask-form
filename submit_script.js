@@ -4,14 +4,14 @@
  */
 
 // 1. Ngrok 產生的公開 HTTPS 網址 (每次啟動 ngrok 都會改變，需要即時更新)
-const NGROK_PUBLIC_URL = 'https://d9a84d701603.ngrok-free.app/api/workflows/run'; 
+const NGROK_PUBLIC_URL = 'https://d9a84d701603.ngrok-free.app'; 
 
 // 2. 動態獲取當前完整的 URL
 const currentDashboardUrl = window.location.href; 
 console.log('當前 URL:', currentDashboardUrl);
 
 // 3. Dify 代理的完整 Webhook URL
-// const DIFY_WEBHOOK_URL = `${NGROK_PUBLIC_URL}/proxy/dify`; 
+ const DIFY_WEBHOOK_URL = `${NGROK_PUBLIC_URL}/proxy/dify`; 
 
 // *******************************************************************
 
@@ -62,7 +62,7 @@ async function sendDataToDify() {
     console.log('發送 Payload:', tableauPayload);
     
     try {
-        const response = await fetch(NGROK_PUBLIC_URL, {
+        const response = await fetch(DIFY_WEBHOOK_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
